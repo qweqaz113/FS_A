@@ -1,7 +1,7 @@
 """Compatibility entry point for the refined full-benchmark run."""
 
-from experiments.co2full_function_similarity.paths import DATA_DIR
-from experiments.co2full_function_similarity.run_batch import main as run_batch
+from experiments.co2full_function_similarity.common.paths import DATA_DIR
+from experiments.co2full_function_similarity.workflows.run_batch import main as run_batch
 
 
 REFINEMENT_DIR = DATA_DIR / "refinement_full"

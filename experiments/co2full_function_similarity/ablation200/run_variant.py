@@ -27,7 +27,7 @@ from enterprise_agent.agents.subagents.difference_analyst import build_differenc
 from enterprise_agent.agents.subagents.semantic_analyst import build_semantic_analyst_subagent
 from enterprise_agent.agents.tools.registry import build_tools
 from enterprise_agent.infra.config import get_settings
-from experiments.co2full_function_similarity.runner import compare_co2full_row
+from experiments.co2full_function_similarity.common.runner import compare_co2full_row
 
 
 VARIANTS = {

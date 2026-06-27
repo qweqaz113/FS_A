@@ -8,15 +8,15 @@ from pathlib import Path
 from time import sleep
 
 from enterprise_agent.agents.runtime import AgentRuntime
-from experiments.co2full_function_similarity.loader import load_co2full_pair_by_row
-from experiments.co2full_function_similarity.paths import (
+from experiments.co2full_function_similarity.common.loader import load_co2full_pair_by_row
+from experiments.co2full_function_similarity.common.paths import (
     DEFAULT_DB_ROOT,
     DEFAULT_PAIR_CSV,
     REPORT_DIR as DEFAULT_REPORT_DIR,
     TRACE_DIR as DEFAULT_TRACE_DIR,
     report_path_for,
 )
-from experiments.co2full_function_similarity.runner import compare_co2full_row
+from experiments.co2full_function_similarity.common.runner import compare_co2full_row
 
 
 ROW_START = 0

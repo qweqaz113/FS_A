@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from experiments.co2full_function_similarity.paths import DATA_DIR
+from experiments.co2full_function_similarity.common.paths import DATA_DIR
 
 
 def main(argv: list[str] | None = None) -> int:

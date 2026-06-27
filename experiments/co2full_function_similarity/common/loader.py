@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from enterprise_agent.domain.function_similarity import FunctionCompareInput
-from experiments.co2full_function_similarity.paths import (
+from experiments.co2full_function_similarity.common.paths import (
     DEFAULT_DB_ROOT,
     DEFAULT_PAIR_CSV,
     build_co2full_pair_key,

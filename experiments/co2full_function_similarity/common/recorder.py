@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from enterprise_agent.domain.function_similarity import FunctionCompareInput, FunctionCompareVerdict
-from experiments.co2full_function_similarity.paths import (
+from experiments.co2full_function_similarity.common.paths import (
     REPORT_DIR,
     TRACE_DIR,
     pair_key_from_metadata,

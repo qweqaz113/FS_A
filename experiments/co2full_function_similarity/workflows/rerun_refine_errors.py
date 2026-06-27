@@ -8,12 +8,12 @@ from pathlib import Path
 from time import sleep
 
 from enterprise_agent.agents.runtime import AgentRuntime
-from experiments.co2full_function_similarity.paths import (
+from experiments.co2full_function_similarity.common.paths import (
     DATA_DIR,
     DEFAULT_DB_ROOT,
     DEFAULT_PAIR_CSV,
 )
-from experiments.co2full_function_similarity.runner import compare_co2full_row
+from experiments.co2full_function_similarity.common.runner import compare_co2full_row
 
 
 CSV_PATH = DEFAULT_PAIR_CSV

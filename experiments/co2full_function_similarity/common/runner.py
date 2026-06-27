@@ -6,9 +6,9 @@ from typing import Any
 
 from enterprise_agent.agents.runtime import AgentRuntime
 from enterprise_agent.domain.function_similarity import FunctionCompareInput
-from experiments.co2full_function_similarity.loader import load_co2full_pair_by_row
-from experiments.co2full_function_similarity.paths import REPORT_DIR, TRACE_DIR
-from experiments.co2full_function_similarity.recorder import ExperimentRecorder
+from experiments.co2full_function_similarity.common.loader import load_co2full_pair_by_row
+from experiments.co2full_function_similarity.common.paths import REPORT_DIR, TRACE_DIR
+from experiments.co2full_function_similarity.common.recorder import ExperimentRecorder
 
 
 def compare_loaded_pair(

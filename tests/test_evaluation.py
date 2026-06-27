@@ -1,4 +1,4 @@
-from experiments.co2full_function_similarity.evaluate_reports import calculate_metrics
+from experiments.co2full_function_similarity.evaluation.evaluate_reports import calculate_metrics
 
 
 def test_calculate_metrics() -> None:

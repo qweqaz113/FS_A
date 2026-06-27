@@ -30,8 +30,10 @@ for the paper's final evaluation.
 |   |   `-- backends/         # DeepAgents Docker sandbox adapter
 |   `-- domain/               # Input and verdict schemas
 |-- experiments/co2full_function_similarity/
-|   |-- run_batch.py          # Initial/final Top-K verification driver
-|   |-- evaluate_reports.py   # P, R, F2, Nv, and error analysis
+|   |-- common/               # Shared loading, paths, recording, and execution
+|   |-- workflows/            # Initial, refinement, and error-rerun workflows
+|   |-- baselines/            # Original Co2FuLL single-LLM baseline
+|   |-- evaluation/           # P, R, F2, Nv, and error analysis
 |   |-- skill_evolution/      # Offline failure analysis and materialization
 |   `-- ablation200/          # Targeted 200-pair component ablation
 |-- tests/                    # Tests that do not call an LLM
@@ -121,7 +123,7 @@ Run a small deterministic-only batch to validate the dataset loader and output
 layout without calling an LLM:
 
 ```bash
-uv run python -m experiments.co2full_function_similarity.run_batch \
+uv run python -m experiments.co2full_function_similarity.workflows.run_batch \
   --row-limit 2 \
   --max-workers 1 \
   --deterministic-only
@@ -132,7 +134,7 @@ uv run python -m experiments.co2full_function_similarity.run_batch \
 Start with a small LLM-backed smoke test:
 
 ```bash
-uv run python -m experiments.co2full_function_similarity.run_batch \
+uv run python -m experiments.co2full_function_similarity.workflows.run_batch \
   --row-limit 2 \
   --max-workers 1
 ```
@@ -140,7 +142,7 @@ uv run python -m experiments.co2full_function_similarity.run_batch \
 Run the complete candidate set:
 
 ```bash
-uv run python -m experiments.co2full_function_similarity.run_batch \
+uv run python -m experiments.co2full_function_similarity.workflows.run_batch \
   --row-limit 5001 \
   --max-workers 32
 ```
@@ -162,7 +164,7 @@ when a completed pair should be recomputed.
 List all batch options with:
 
 ```bash
-uv run python -m experiments.co2full_function_similarity.run_batch --help
+uv run python -m experiments.co2full_function_similarity.workflows.run_batch --help
 ```
 
 ## Evaluate reports
@@ -170,14 +172,14 @@ uv run python -m experiments.co2full_function_similarity.run_batch --help
 Evaluate the default report directory:
 
 ```bash
-uv run python -m experiments.co2full_function_similarity.evaluate_reports
+uv run python -m experiments.co2full_function_similarity.evaluation.evaluate_reports
 ```
 
 This produces `metrics.json`, `metrics.md`, `predictions.csv`, and `errors.csv` in
 `data/eval/`. For a refined full run:
 
 ```bash
-uv run python -m experiments.co2full_function_similarity.evaluate_reports \
+uv run python -m experiments.co2full_function_similarity.evaluation.evaluate_reports \
   --report-dir experiments/co2full_function_similarity/data/refinement_full/report \
   --eval-dir experiments/co2full_function_similarity/data/refine_eval
 ```
@@ -206,7 +208,7 @@ steps.
    into separate output directories:
 
    ```bash
-   uv run python -m experiments.co2full_function_similarity.run_batch_refinement \
+   uv run python -m experiments.co2full_function_similarity.workflows.run_batch_refinement \
      --row-limit 5001 \
      --max-workers 32
    ```
@@ -235,9 +237,6 @@ Summarize the ablation:
 ```bash
 uv run python -m experiments.co2full_function_similarity.ablation200.summarize
 ```
-
-See [the ablation notes](experiments/co2full_function_similarity/ablation200/README.md)
-for subset construction and output details.
 
 ## Paper results
 
@@ -269,3 +268,46 @@ record are finalized.
 
 A public software license has not yet been selected. Add a `LICENSE` file before the
 GitHub release so that reuse conditions are explicit.
+
+## Co2FuLL Few-Shot V4 baseline
+
+The original Co2FuLL single-LLM verification experiment is available as a separate
+baseline. It uses the paper's system prompt, four Few-Shot examples, Top-5 candidate
+pairs, `temperature=0`, `top_p=1.0`, and 32 workers by default. It does not invoke the
+FuncSim-Agent supervisor or subagents.
+
+Validate all inputs without sending API requests:
+
+```powershell
+uv run python -m experiments.co2full_function_similarity.baselines.run_co2full_v4_baseline --dry-run
+```
+
+Run one positive and one negative pair as an API smoke test:
+
+```powershell
+uv run python -m experiments.co2full_function_similarity.baselines.run_co2full_v4_baseline `
+  --label-1-limit 1 `
+  --label-0-limit 1
+```
+
+Run all 5,001 candidate pairs with the default 32 workers:
+
+```powershell
+uv run python -m experiments.co2full_function_similarity.baselines.run_co2full_v4_baseline
+```
+
+Existing report JSON files are skipped, so the command can be rerun after interruption.
+Results are written under `experiments/co2full_function_similarity/data/co2full_v4_baseline/report`.
+Set `DEEPSEEK_API_KEY` in `.env` before making API requests.
+Pairs with empty or unavailable pseudocode follow the FuncSim-Agent dataset policy: they are
+not sent to the API, are excluded from the valid report set, and are recorded in
+`data/co2full_v4_baseline/invalid_rows.json`.
+
+Calculate the D1 metrics after the run:
+
+```powershell
+uv run python -m experiments.co2full_function_similarity.evaluation.evaluate_reports `
+  --report-dir experiments/co2full_function_similarity/data/co2full_v4_baseline/report `
+  --eval-dir experiments/co2full_function_similarity/data/co2full_v4_baseline/eval `
+  --total-target-queries 500
+```

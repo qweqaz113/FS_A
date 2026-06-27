@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 
-EXPERIMENT_DIR = Path(__file__).resolve().parent
+EXPERIMENT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = EXPERIMENT_DIR / "data"
 DEFAULT_DB_ROOT = DATA_DIR / "dbs"
 DEFAULT_PAIR_CSV = DEFAULT_DB_ROOT / "xm-full_top5-250515.csv"

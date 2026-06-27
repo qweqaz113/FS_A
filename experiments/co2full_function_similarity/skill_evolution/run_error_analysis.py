@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from enterprise_agent.agents.factory import create_function_similarity_error_analysis_agent
-from experiments.co2full_function_similarity.loader import load_co2full_pair_by_row
-from experiments.co2full_function_similarity.paths import safe_result_filename
+from experiments.co2full_function_similarity.common.loader import load_co2full_pair_by_row
+from experiments.co2full_function_similarity.common.paths import safe_result_filename
 
 
 EXPERIMENT_DIR = Path(__file__).resolve().parents[1]
