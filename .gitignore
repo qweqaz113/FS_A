@@ -17,6 +17,9 @@ wheels/
 # Datasets and generated experiment artifacts
 experiments/co2full_function_similarity/data/
 
+# Local experiment workflow overrides
+experiments/co2full_function_similarity/workflows/rerun_refine_errors.py
+
 # Tool caches
 .ruff_cache/
 .mypy_cache/
