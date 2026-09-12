@@ -1,0 +1,4 @@
+name: skill_evolution
+dataset: ../../datasets/co2full/raw
+entrypoint: run_error_analysis.py
+output: runs/default

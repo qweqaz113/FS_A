@@ -3,7 +3,7 @@ import json
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from experiments.co2full_function_similarity.baselines.run_co2full_v4_baseline import (
+from experiments.co2full_v4_baseline.run import (
     build_messages,
     load_baseline_pseudocode,
     parse_response,

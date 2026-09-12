@@ -1,0 +1,5 @@
+name: main_agent
+dataset: ../../datasets/co2full/raw
+entrypoint: run.py
+evaluator: evaluate.py
+output: runs/paper_initial

@@ -9,6 +9,6 @@ services:
       - ./src/enterprise_agent/agents/skills/function-similarity:/input/skills:ro
       - ./src/enterprise_agent/agents/subagents:/input/subagents:ro
       - ./src/enterprise_agent/agents/tools:/input/tools:ro
-      - ./experiments/co2full_function_similarity/data/skill_evolution/error_analysis:/input/evolution:ro
-      - ./experiments/co2full_function_similarity/data/sandbox/workspace:/workspace
-      - ./experiments/co2full_function_similarity/data/sandbox/output:/output
+      - ./experiments/skill_evolution/runs/default/error_analysis:/input/evolution:ro
+      - ./data/sandbox/workspace:/workspace
+      - ./data/sandbox/output:/output

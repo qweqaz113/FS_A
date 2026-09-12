@@ -1,0 +1,5 @@
+name: co2full_v4_baseline
+dataset: ../../datasets/co2full/raw
+entrypoint: run.py
+evaluator: evaluate.py
+output: runs/deepseek_v4

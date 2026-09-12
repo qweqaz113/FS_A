@@ -1,0 +1,4 @@
+name: ablation_200
+dataset: ../../datasets/co2full/raw
+entrypoint: run_variant.py
+output: runs/default

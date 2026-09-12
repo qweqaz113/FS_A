@@ -1,313 +1,143 @@
 # FuncSim-Agent
 
-Official implementation of **FuncSim-Agent: An Agent-Based Framework for Binary
-Function Similarity Detection**.
+FuncSim-Agent 是一个面向二进制函数相似性判断的多智能体实验项目。核心代码、数据集和实验被明确分开：公共能力放在 `src/`，原始数据放在 `datasets/`，每个实验在 `experiments/` 下独立管理脚本与结果。
 
-FuncSim-Agent verifies Top-K binary-function candidates produced by a retrieval
-model. It combines deterministic pseudocode analysis with three specialist agents
-and a supervisor:
-
-- **SemMatch-Agent** collects evidence for semantic equivalence.
-- **DiffProbe-Agent** searches for concrete behavioral conflicts.
-- **NoiseLens-Agent** distinguishes compiler, architecture, and decompiler variation.
-- **Supervisor/FSA** integrates the evidence and emits an auditable verdict.
-
-The implementation is built with
-[DeepAgents](https://github.com/langchain-ai/deepagents) and uses DeepSeek models
-through LangChain. The released source contains the refined verification skill used
-for the paper's final evaluation.
-
-## Repository layout
+## 项目结构
 
 ```text
-.
-|-- src/enterprise_agent/
-|   |-- agents/
-|   |   |-- prompts/          # Supervisor and refinement prompts
-|   |   |-- skills/           # FuncSim Verification Skill
-|   |   |-- subagents/        # Three specialist agent definitions
-|   |   |-- tools/            # Deterministic pseudocode analysis
-|   |   `-- backends/         # DeepAgents Docker sandbox adapter
-|   `-- domain/               # Input and verdict schemas
-|-- experiments/co2full_function_similarity/
-|   |-- common/               # Shared loading, paths, recording, and execution
-|   |-- workflows/            # Initial, refinement, and error-rerun workflows
-|   |-- baselines/            # Original Co2FuLL single-LLM baseline
-|   |-- evaluation/           # P, R, F2, Nv, and error analysis
-|   |-- skill_evolution/      # Offline failure analysis and materialization
-|   `-- ablation200/          # Targeted 200-pair component ablation
-|-- tests/                    # Tests that do not call an LLM
-|-- compose.yaml              # Reproducible DeepAgents sandbox
-|-- .env.example              # Runtime configuration template
-`-- pyproject.toml
+study/
+├─ src/enterprise_agent/
+│  ├─ agents/                       # 智能体、子智能体、提示词、工具和技能
+│  ├─ benchmarks/co2full/           # Co2FuLL 公共加载、执行、记录、评估逻辑
+│  └─ infra/                        # 模型、配置和运行时基础设施
+├─ datasets/co2full/raw/            # 原始 CSV、反编译代码和 few-shot 数据
+├─ experiments/
+│  ├─ main_agent/                   # 主实验
+│  ├─ refined_agent/                # 优化后智能体实验
+│  ├─ co2full_v4_baseline/          # 论文式 LLM 基线
+│  ├─ ablation_200/                 # 200 样本组件消融
+│  └─ skill_evolution/              # 错误分析和技能进化
+├─ data/sandbox/                    # Docker 智能体运行沙箱
+├─ tests/
+├─ compose.yaml
+└─ pyproject.toml
 ```
 
-Datasets, model traces, reports, and generated refinement artifacts are intentionally
-excluded from Git.
+每个实验遵循同一约定：
 
-## Requirements
-
-- Python 3.13
-- [uv](https://docs.astral.sh/uv/)
-- Docker with Docker Compose
-- A DeepSeek API key for LLM-based runs
-- The Co2FuLL/BinKit-derived Top-K candidate data used by the paper
-
-## Installation
-
-```bash
-git clone <repository-url>
-cd funcsim-agent
-uv sync --dev
+```text
+experiments/<experiment>/
+├─ README.md                        # 该实验目的和命令
+├─ experiment.yaml                 # 数据、入口和输出位置
+├─ run.py 或专用执行脚本
+├─ evaluate.py                     # 需要统一评估时提供
+└─ runs/                            # 该实验的历史结果和新结果
 ```
 
-Copy the environment template and add your API key:
+要运行哪个实验，直接进入对应目录查看 `README.md` 和脚本即可。脚本按自身位置解析路径，不依赖当前工作目录。
 
-```bash
-cp .env.example .env
-```
-
-On PowerShell:
+## 环境准备
 
 ```powershell
+uv sync
 Copy-Item .env.example .env
 ```
 
-At minimum, set:
+在 `.env` 中配置模型供应商、模型名和密钥。若使用 Docker 沙箱：
 
-```dotenv
-DEEPSEEK_API_KEY=your_api_key
-LLM_MODEL=deepseek:deepseek-v4-flash
+```powershell
+docker compose up -d agent-sandbox
 ```
 
-Start the sandbox used by DeepAgents:
+## 数据集
 
-```bash
-docker compose up -d
-```
+Co2FuLL 原始数据统一位于 `datasets/co2full/raw/`：
 
-Stop it after the experiment with `docker compose down`.
-
-## Dataset layout
-
-The data are not redistributed in this repository. After obtaining the dataset from
-its original source, arrange it as follows:
+本仓库不重复分发原始数据。请参考
+[Co2FuLL 官方项目](https://github.com/GentleCP/Co2FuLL-public)获取代码、数据和上游说明；
+官方数据归档位于 [Figshare](https://doi.org/10.6084/m9.figshare.30426451)。
 
 ```text
-experiments/co2full_function_similarity/data/
-`-- dbs/
-    |-- xm-full_top5-250515.csv
-    `-- Binkit-1.0-normal-strip-top_k_code/
-        `-- <project>/
-            `-- <binary-name>.json
+raw/
+├─ xm-full_top5-250515.csv
+├─ Binkit-1.0-normal-strip-top_k_code/
+├─ few_shot_examples.json
+└─ top5_for_llm-idb_path2func_eas.json
 ```
 
-The pair CSV must contain at least these columns:
+原始数据只保存一份，各实验通过公共加载器读取，不再复制到实验目录。
 
-```text
-bin_name_1,fva_1,bin_name_2,fva_2,label
+## 运行主实验
+
+```powershell
+Set-Location experiments/main_agent
+uv run python run.py --help
+uv run python run.py --row-limit 10
+uv run python evaluate.py
 ```
 
-Each binary JSON file maps a function address to an object containing
-`pseudo_code`. Use `--csv-path` and `--db-root` to select a different layout.
+结果默认写入 `experiments/main_agent/runs/paper_initial/`：
 
-## Quick validation without an API
+- `trace/`：完整智能体调用轨迹
+- `report/`：每个函数对的最终判断
+- `evaluation/`：指标、预测表和错误表
 
-Run the unit tests:
+## 运行其他实验
 
-```bash
+优化后智能体：
+
+```powershell
+Set-Location experiments/refined_agent
+uv run python run.py --row-limit 10
+uv run python evaluate.py
+```
+
+Co2FuLL v4 基线：
+
+```powershell
+Set-Location experiments/co2full_v4_baseline
+uv run python run.py --dry-run
+uv run python run.py --row-limit 10
+uv run python evaluate.py
+```
+
+200 样本消融：
+
+```powershell
+Set-Location experiments/ablation_200
+uv run python build_subset.py
+uv run python run_variant.py --variant single_agent
+uv run python run_variant.py --variant wo_diffprobe
+uv run python run_variant.py --variant wo_noiselens
+uv run python summarize.py
+```
+
+技能进化：
+
+```powershell
+Set-Location experiments/skill_evolution
+uv run python run_error_analysis.py --help
+uv run python run_package_materializer.py --help
+```
+
+## 公共代码边界
+
+以下能力统一维护在 `src/enterprise_agent/benchmarks/co2full/`：
+
+- `paths.py`：项目根目录和数据集默认路径
+- `dataset.py`：CSV、函数对和伪代码加载
+- `runner.py`：单个函数对执行流程
+- `recorder.py`：trace 与 report 落盘
+- `batch.py`：批量调度、并发和断点续跑
+- `evaluation.py`：预测汇总与指标计算
+
+实验目录只保留该实验独有的参数、提示策略、样本选择和入口，不复制公共实现。
+
+## 测试
+
+```powershell
 uv run pytest
+uv run ruff check .
 ```
 
-Run a small deterministic-only batch to validate the dataset loader and output
-layout without calling an LLM:
-
-```bash
-uv run python -m experiments.co2full_function_similarity.workflows.run_batch \
-  --row-limit 2 \
-  --max-workers 1 \
-  --deterministic-only
-```
-
-## Run FuncSim-Agent
-
-Start with a small LLM-backed smoke test:
-
-```bash
-uv run python -m experiments.co2full_function_similarity.workflows.run_batch \
-  --row-limit 2 \
-  --max-workers 1
-```
-
-Run the complete candidate set:
-
-```bash
-uv run python -m experiments.co2full_function_similarity.workflows.run_batch \
-  --row-limit 5001 \
-  --max-workers 32
-```
-
-The command writes one JSON trace and one normalized report per candidate pair:
-
-```text
-data/trace/                 # Complete DeepAgents execution traces
-data/report/                # Normalized similarity verdicts
-```
-
-These paths are relative to `experiments/co2full_function_similarity/`. Existing
-reports are skipped, so an interrupted run can be resumed. Pass `--overwrite` only
-when a completed pair should be recomputed.
-
-> **Cost warning:** LLM-backed batch runs incur API charges. Validate the setup with
-> `--row-limit 2 --max-workers 1` before starting the full benchmark.
-
-List all batch options with:
-
-```bash
-uv run python -m experiments.co2full_function_similarity.workflows.run_batch --help
-```
-
-## Evaluate reports
-
-Evaluate the default report directory:
-
-```bash
-uv run python -m experiments.co2full_function_similarity.evaluation.evaluate_reports
-```
-
-This produces `metrics.json`, `metrics.md`, `predictions.csv`, and `errors.csv` in
-`data/eval/`. For a refined full run:
-
-```bash
-uv run python -m experiments.co2full_function_similarity.evaluation.evaluate_reports \
-  --report-dir experiments/co2full_function_similarity/data/refinement_full/report \
-  --eval-dir experiments/co2full_function_similarity/data/refine_eval
-```
-
-The D1 evaluation uses 500 target queries as the recall denominator. Override it
-with `--total-target-queries` for another benchmark.
-
-## Offline skill refinement
-
-FuncSim-Agent turns failed judgments into reusable verification guidance in three
-steps.
-
-1. Analyze incorrect reports and produce structured failure records:
-
-   ```bash
-   uv run python -m experiments.co2full_function_similarity.skill_evolution.run_error_analysis
-   ```
-
-2. Materialize an updated prompt/skill package in the Docker sandbox:
-
-   ```bash
-   uv run python -m experiments.co2full_function_similarity.skill_evolution.run_package_materializer
-   ```
-
-3. Review the sandbox output, apply the accepted package, and run the full benchmark
-   into separate output directories:
-
-   ```bash
-   uv run python -m experiments.co2full_function_similarity.workflows.run_batch_refinement \
-     --row-limit 5001 \
-     --max-workers 32
-   ```
-
-The online verifier never receives ground-truth labels. Labels are used only by the
-offline failure-analysis stage.
-
-## Component ablation
-
-Build the targeted 200-pair stress subset:
-
-```bash
-uv run python -m experiments.co2full_function_similarity.ablation200.build_subset
-```
-
-Run the new variants:
-
-```bash
-uv run python -m experiments.co2full_function_similarity.ablation200.run_variant --variant single_agent
-uv run python -m experiments.co2full_function_similarity.ablation200.run_variant --variant wo_diffprobe
-uv run python -m experiments.co2full_function_similarity.ablation200.run_variant --variant wo_noiselens
-```
-
-Summarize the ablation:
-
-```bash
-uv run python -m experiments.co2full_function_similarity.ablation200.summarize
-```
-
-## Paper results
-
-| Configuration | Precision | Recall | F2 | Nv |
-|---|---:|---:|---:|---:|
-| FuncSim-Agent | 91.8 | 96.6 | 95.6 | 526 |
-| FuncSim-Agent (refined) | **97.0** | 96.0 | **96.2** | **495** |
-
-The table reports the 4,994 valid candidate-pair evaluations described in the paper.
-Exact results depend on the model endpoint and provider behavior.
-
-## Reproducibility notes
-
-- The repository defaults to `deepseek:deepseek-v4-flash`, matching the paper.
-- Full reports are excluded because they contain large model traces and derived
-  dataset content.
-- The Docker sandbox makes tool execution and skill paths consistent across hosts.
-- Randomness and provider-side model updates may cause small differences between
-  reruns.
-- Do not place API keys in source files. `.env` is ignored by Git.
-
-## Citation
-
-If this code is useful in your research, please cite the FuncSim-Agent paper. Formal
-BibTeX and `CITATION.cff` metadata will be added when the author list and publication
-record are finalized.
-
-## License
-
-A public software license has not yet been selected. Add a `LICENSE` file before the
-GitHub release so that reuse conditions are explicit.
-
-## Co2FuLL Few-Shot V4 baseline
-
-The original Co2FuLL single-LLM verification experiment is available as a separate
-baseline. It uses the paper's system prompt, four Few-Shot examples, Top-5 candidate
-pairs, `temperature=0`, `top_p=1.0`, and 32 workers by default. It does not invoke the
-FuncSim-Agent supervisor or subagents.
-
-Validate all inputs without sending API requests:
-
-```powershell
-uv run python -m experiments.co2full_function_similarity.baselines.run_co2full_v4_baseline --dry-run
-```
-
-Run one positive and one negative pair as an API smoke test:
-
-```powershell
-uv run python -m experiments.co2full_function_similarity.baselines.run_co2full_v4_baseline `
-  --label-1-limit 1 `
-  --label-0-limit 1
-```
-
-Run all 5,001 candidate pairs with the default 32 workers:
-
-```powershell
-uv run python -m experiments.co2full_function_similarity.baselines.run_co2full_v4_baseline
-```
-
-Existing report JSON files are skipped, so the command can be rerun after interruption.
-Results are written under `experiments/co2full_function_similarity/data/co2full_v4_baseline/report`.
-Set `DEEPSEEK_API_KEY` in `.env` before making API requests.
-Pairs with empty or unavailable pseudocode follow the FuncSim-Agent dataset policy: they are
-not sent to the API, are excluded from the valid report set, and are recorded in
-`data/co2full_v4_baseline/invalid_rows.json`.
-
-Calculate the D1 metrics after the run:
-
-```powershell
-uv run python -m experiments.co2full_function_similarity.evaluation.evaluate_reports `
-  --report-dir experiments/co2full_function_similarity/data/co2full_v4_baseline/report `
-  --eval-dir experiments/co2full_function_similarity/data/co2full_v4_baseline/eval `
-  --total-target-queries 500
-```
+`runs/`、原始数据和沙箱运行文件均被 Git 忽略；实验代码、说明和配置正常纳入版本管理。
