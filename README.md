@@ -69,6 +69,18 @@ raw/
 
 ## 运行主实验
 
+### 原版与增强版说明
+
+当前 `src/enterprise_agent/agents/` 中的 Supervisor、三个专家子代理和
+Function Similarity Skill 是两轮错误分析与技能演化后的增强版。第一次精炼前的
+原始 v1.0 推理包已原样保存在
+`experiments/main_agent/original_v1/`，用于审计历史实验和后续发布。
+
+需要注意：`main_agent` 与 `refined_agent` 当前都调用活动的增强版实现；
+`main_agent/runs/paper_initial/` 是历史上使用原始 v1.0 包生成的结果，但当前
+`main_agent/run.py` 不会自动切换到该快照。确定性工具在两轮精炼中均未修改，
+因此原版快照不重复保存工具代码。
+
 ```powershell
 Set-Location experiments/main_agent
 uv run python run.py --help
